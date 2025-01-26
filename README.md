@@ -2,6 +2,8 @@
 
 # :construction: UNDER CONSTRUCTION :construction: 
 
+> *Reusable abstract contracts, for creating JIT liquidity from any capital source*
+
 ---
 
 ![image](https://github.com/user-attachments/assets/066383c4-7ad8-4703-820b-802af74a5dca)
@@ -15,5 +17,5 @@ jitterbug/
 │   ├── JIT.sol         # Base contract for creating and closing liquidity positions
 │   ├── JITHook.sol     # Inherits JIT.sol to create positions in beforeSwap and close positions in afterSwap
 │   └── examples
-│       └── Simple.sol  # Inherits JITHook.sol to specify the capital source
+│       └── Simple.sol  # Inherits JITHook.sol that sources liquidity from an approving EOA address
 ```
