@@ -66,9 +66,9 @@ abstract contract JITHook is JIT {
         uint128 liquidity = _loadLiquidity();
         (BalanceDelta delta,) = _closePosition(key, liquidity, hookData);
 
-        // transfer funds to recipient
-        poolManager.take(key.currency0, _recipient(), uint256(int256(delta.amount0())));
-        poolManager.take(key.currency1, _recipient(), uint256(int256(delta.amount1())));
+        // transfer funds to recipient, must use ERC6909 because the swapper has not transferred ERC20 yet
+        poolManager.mint(_recipient(), key.currency0.toId(), uint256(int256(delta.amount0())));
+        poolManager.mint(_recipient(), key.currency1.toId(), uint256(int256(delta.amount1())));
 
         return (BaseHook.afterSwap.selector, 0);
     }

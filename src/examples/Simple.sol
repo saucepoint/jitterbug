@@ -16,8 +16,8 @@ import {JITHook} from "../JITHook.sol";
 contract Simple is JITHook {
     address depositor;
 
-    constructor(IPoolManager _poolManager) JITHook(_poolManager) {
-        depositor = msg.sender;
+    constructor(IPoolManager _poolManager, address _depositor) JITHook(_poolManager) {
+        depositor = _depositor;
     }
 
     /// @inheritdoc JITHook
@@ -51,12 +51,20 @@ contract Simple is JITHook {
         // calculating sqrt(price * 0.9e18/1e18) * Q96 is the same as
         // (sqrt(price) * Q96) * (sqrt(0.9e18/1e18))
         // (sqrt(price) * Q96) * (sqrt(0.9e18) / sqrt(1e18))
-        uint160 _sqrtPriceLower = uint160(FixedPointMathLib.mulDivDown(uint256(sqrtPriceX96), FixedPointMathLib.sqrt(0.9e18), FixedPointMathLib.sqrt(1e18)));
+        uint160 _sqrtPriceLower = uint160(
+            FixedPointMathLib.mulDivDown(
+                uint256(sqrtPriceX96), FixedPointMathLib.sqrt(0.9e18), FixedPointMathLib.sqrt(1e18)
+            )
+        );
 
         // calculating sqrt(price * 1.1) * Q96 is the same as
         // (sqrt(price) * Q96) * (sqrt(1.1e18/1e18))
         // (sqrt(price) * Q96) * (sqrt(1.1e18) / sqrt(1e18))
-        uint160 _sqrtPriceUpper = uint160(FixedPointMathLib.mulDivDown(uint256(sqrtPriceX96), FixedPointMathLib.sqrt(1.1e18), FixedPointMathLib.sqrt(1e18)));
+        uint160 _sqrtPriceUpper = uint160(
+            FixedPointMathLib.mulDivDown(
+                uint256(sqrtPriceX96), FixedPointMathLib.sqrt(1.1e18), FixedPointMathLib.sqrt(1e18)
+            )
+        );
 
         int24 _tickLowerUnaligned = TickMath.getTickAtSqrtPrice(_sqrtPriceLower);
         int24 _tickUpperUnaligned = TickMath.getTickAtSqrtPrice(_sqrtPriceUpper);
