@@ -26,10 +26,18 @@ abstract contract JITHook is JIT {
         Hooks.validateHookPermissions(IHooks(address(this)), getHookPermissions());
     }
 
-    /// @dev Inheriting contract should override and should pull funds from a source and transfer them to PoolManager
+    /// @notice Pull funds for the JIT position
+    /// @dev override and pull funds from a source and transfer them to PoolManager
+    /// @param currency0 the first currency of the pool
+    /// @param currency1 the second currency of the pool
+    /// @return excessRecipient the recipient of excess tokens, in the event that pulled capital does not perfectly match the JIT position's capital requirements
+    /// @return amount0 the amount of currency0 pulled into the JIT position
+    /// @return amount1 the amount of currency1 pulled into the JIT position
     function _pull(Currency currency0, Currency currency1) internal virtual returns (address, uint128, uint128);
 
+    /// @notice The recipient of funds after the JIT position is closed
     /// @dev Inheriting contract should override and specify recipient of the JIT position
+    /// @return the recipient of the JIT position's funds
     function _recipient() internal view virtual returns (address);
 
     // TODO: restrict onlyByManager
@@ -94,6 +102,7 @@ abstract contract JITHook is JIT {
         });
     }
 
+    /// @dev Stores the liquidity of the position (in beforeSwap)
     function _storeLiquidity(uint128 liquidity) private {
         bytes32 liquiditySlot;
         assembly {
@@ -101,6 +110,7 @@ abstract contract JITHook is JIT {
         }
     }
 
+    /// @dev Read the liquidity of the position created in beforeSwap
     function _loadLiquidity() private view returns (uint128 liquidity) {
         bytes32 liquiditySlot;
         assembly {

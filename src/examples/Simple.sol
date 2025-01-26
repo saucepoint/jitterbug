@@ -12,8 +12,10 @@ import {JIT} from "../JIT.sol";
 import {JITHook} from "../JITHook.sol";
 
 /// @title Simple JIT Hook
-/// @notice Pulls funds from the deployer, JIT to create a position, and transfers funds back to the deployer
+/// @notice Pulls funds from a specified address, create a JIT position, and transfers funds back to the deployer
+/// @dev JIT position is +/- 10% of the spot price
 contract Simple is JITHook {
+    /// @dev Depositor should ERC20.approve this address
     address depositor;
 
     constructor(IPoolManager _poolManager, address _depositor) JITHook(_poolManager) {

@@ -23,6 +23,11 @@ abstract contract JIT is ImmutableState {
 
     constructor(IPoolManager _manager) ImmutableState(_manager) {}
 
+    /// @notice Determine the tick range for the JIT position
+    /// @param key The pool key
+    /// @param sqrtPriceX96 The current sqrt price of the pool
+    /// @return tickLower The lower tick of the JIT position
+    /// @return tickUpper The upper tick of the JIT position
     function _getTickRange(PoolKey memory key, uint160 sqrtPriceX96)
         internal
         view
@@ -77,6 +82,7 @@ abstract contract JIT is ImmutableState {
         );
     }
 
+    /// @dev Store the tick range of the JIT position
     function _storeTicks(int24 tickLower, int24 tickUpper) private {
         bytes32 tickLowerSlot = TICK_LOWER_SLOT;
         bytes32 tickUpperSlot = TICK_UPPER_SLOT;
@@ -86,6 +92,7 @@ abstract contract JIT is ImmutableState {
         }
     }
 
+    /// @dev Load the tick range of the JIT position, to be used to close the position
     function _loadTicks() private view returns (int24 tickLower, int24 tickUpper) {
         bytes32 tickLowerSlot = TICK_LOWER_SLOT;
         bytes32 tickUpperSlot = TICK_UPPER_SLOT;
