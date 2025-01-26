@@ -15,7 +15,7 @@ import {LiquidityAmounts} from "v4-core/test/utils/LiquidityAmounts.sol";
 import {TickMath} from "v4-core/src/libraries/TickMath.sol";
 import {StateLibrary} from "v4-core/src/libraries/StateLibrary.sol";
 
-abstract contract SingleJIT is ImmutableState {
+abstract contract JIT is ImmutableState {
     using StateLibrary for IPoolManager;
 
     bytes32 constant TICK_LOWER_SLOT = keccak256("tickLower");
@@ -27,30 +27,35 @@ abstract contract SingleJIT is ImmutableState {
         internal
         view
         virtual
-        returns (int24 tickLower, uint160 sqrtPriceX96Lower, int24 tickUpper, uint160 sqrtPriceX96Upper);
+        returns (int24 tickLower, int24 tickUpper);
 
     function _createPosition(PoolKey memory key, uint128 amount0, uint128 amount1, bytes calldata hookDataOpen)
         internal
         virtual
-        returns (BalanceDelta delta, uint128 liquidity)
+        returns (BalanceDelta delta, BalanceDelta feesAccrued, uint128 liquidity)
     {
         (uint160 sqrtPriceX96,,,) = poolManager.getSlot0(key.toId());
-        (int24 tickLower, uint160 sqrtPriceX96Lower, int24 tickUpper, uint160 sqrtPriceX96Upper) =
-            _getTickRange(key, sqrtPriceX96);
+        (int24 tickLower, int24 tickUpper) = _getTickRange(key, sqrtPriceX96);
 
         liquidity = LiquidityAmounts.getLiquidityForAmounts(
-            sqrtPriceX96, sqrtPriceX96Lower, sqrtPriceX96Upper, amount0, amount1
+            sqrtPriceX96,
+            TickMath.getSqrtPriceAtTick(tickLower),
+            TickMath.getSqrtPriceAtTick(tickUpper),
+            amount0,
+            amount1
         );
         _storeTicks(tickLower, tickUpper);
-        (delta,) = _modifyLiquidity(key, tickLower, tickUpper, int256(uint256(liquidity)), hookDataOpen);
+        (delta, feesAccrued) = _modifyLiquidity(key, tickLower, tickUpper, int256(uint256(liquidity)), hookDataOpen);
     }
 
     function _closePosition(PoolKey memory key, uint128 liquidityToClose, bytes calldata hookDataClose)
         internal
         virtual
+        returns (BalanceDelta delta, BalanceDelta feesAccrued)
     {
         (int24 tickLower, int24 tickUpper) = _loadTicks();
-        _modifyLiquidity(key, tickLower, tickUpper, -int256(uint256(liquidityToClose)), hookDataClose);
+        (delta, feesAccrued) =
+            _modifyLiquidity(key, tickLower, tickUpper, -int256(uint256(liquidityToClose)), hookDataClose);
     }
 
     function _modifyLiquidity(
