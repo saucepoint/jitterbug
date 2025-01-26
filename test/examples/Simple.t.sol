@@ -9,29 +9,20 @@ import {TickMath} from "v4-core/src/libraries/TickMath.sol";
 import {IPoolManager} from "v4-core/src/interfaces/IPoolManager.sol";
 import {PoolKey} from "v4-core/src/types/PoolKey.sol";
 import {BalanceDelta} from "v4-core/src/types/BalanceDelta.sol";
-import {PoolId, PoolIdLibrary} from "v4-core/src/types/PoolId.sol";
+import {PoolId} from "v4-core/src/types/PoolId.sol";
 import {CurrencyLibrary, Currency} from "v4-core/src/types/Currency.sol";
-import {PoolSwapTest} from "v4-core/src/test/PoolSwapTest.sol";
 import {Simple} from "../../src/examples/Simple.sol";
 import {StateLibrary} from "v4-core/src/libraries/StateLibrary.sol";
 
-import {LiquidityAmounts} from "v4-core/test/utils/LiquidityAmounts.sol";
 import {IPositionManager} from "v4-periphery/src/interfaces/IPositionManager.sol";
-import {EasyPosm} from "../utils/EasyPosm.sol";
 import {Fixtures} from "../utils/Fixtures.sol";
 
 contract SimpleTest is Test, Fixtures {
-    using EasyPosm for IPositionManager;
-    using PoolIdLibrary for PoolKey;
     using CurrencyLibrary for Currency;
     using StateLibrary for IPoolManager;
 
     Simple hook;
     PoolId poolId;
-
-    uint256 tokenId;
-    int24 tickLower;
-    int24 tickUpper;
 
     address alice = makeAddr("ALICE");
 
