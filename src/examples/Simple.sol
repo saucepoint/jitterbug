@@ -23,18 +23,19 @@ contract Simple is JITHook {
     }
 
     /// @inheritdoc JITHook
-    function _pull(Currency currency0, Currency currency1)
+    function _pull(PoolKey calldata key, IPoolManager.SwapParams calldata /*params*/)
         internal
         override
         returns (address excessRecipient, uint128 amount0, uint128 amount1)
     {
         excessRecipient = depositor;
+
         amount0 = uint128(100e18);
         amount1 = uint128(100e18);
 
         // transferFrom: depositor's currency0 and currency1 to the PoolManager
-        _sendToPoolManager(currency0, amount0);
-        _sendToPoolManager(currency1, amount1);
+        _sendToPoolManager(key.currency0, amount0);
+        _sendToPoolManager(key.currency1, amount1);
     }
 
     /// @inheritdoc JITHook
