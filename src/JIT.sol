@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import "forge-std/console2.sol";
+
 import {IPoolManager} from "v4-core/src/interfaces/IPoolManager.sol";
 import {PoolKey} from "v4-core/src/types/PoolKey.sol";
 import {BalanceDelta} from "v4-core/src/types/BalanceDelta.sol";
@@ -44,6 +46,7 @@ abstract contract JIT is ImmutableState {
             amount0,
             amount1
         );
+        console2.log("liquidity", liquidity);
         _storeTicks(tickLower, tickUpper);
         (delta, feesAccrued) = _modifyLiquidity(key, tickLower, tickUpper, int256(uint256(liquidity)), hookDataOpen);
     }
