@@ -31,10 +31,6 @@ contract Simple is JITHook {
         excessRecipient = depositor;
         amount0 = uint128(100e18);
         amount1 = uint128(100e18);
-
-        // transferFrom: depositor's currency0 and currency1 to the PoolManager
-        _sendToPoolManager(currency0, amount0);
-        _sendToPoolManager(currency1, amount1);
     }
 
     /// @inheritdoc JITHook
@@ -79,7 +75,7 @@ contract Simple is JITHook {
 
     // Utility Functions
 
-    function _sendToPoolManager(Currency currency, uint128 amount) private {
+    function _sendToPoolManager(Currency currency, uint256 amount) internal override {
         poolManager.sync(currency);
         IERC20(Currency.unwrap(currency)).transferFrom(depositor, address(poolManager), amount);
         poolManager.settle();

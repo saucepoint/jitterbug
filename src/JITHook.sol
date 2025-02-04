@@ -35,6 +35,8 @@ abstract contract JITHook is JIT {
     /// @return amount1 the amount of currency1 pulled into the JIT position
     function _pull(Currency currency0, Currency currency1) internal virtual returns (address, uint128, uint128);
 
+    function _sendToPoolManager(Currency currency, uint256 amount) internal virtual;
+
     /// @notice The recipient of funds after the JIT position is closed
     /// @dev Inheriting contract should override and specify recipient of the JIT position
     /// @return the recipient of the JIT position's funds
@@ -52,13 +54,6 @@ abstract contract JITHook is JIT {
         (,, uint128 liquidity) = _createPosition(key, amount0, amount1, hookData);
         _storeLiquidity(liquidity);
 
-        // refund excess tokens to recipient
-        // TODO: optimization: custom transient reader to fetch balance delta in one external call
-        int256 delta0 = poolManager.currencyDelta(address(this), key.currency0);
-        int256 delta1 = poolManager.currencyDelta(address(this), key.currency1);
-        if (delta0 > 0) poolManager.take(key.currency0, excessRecipient, uint256(delta0));
-        if (delta1 > 0) poolManager.take(key.currency1, excessRecipient, uint256(delta1));
-
         return (BaseHook.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, 0);
     }
 
@@ -72,11 +67,26 @@ abstract contract JITHook is JIT {
     ) external returns (bytes4, int128) {
         // close JIT position
         uint128 liquidity = _loadLiquidity();
-        (BalanceDelta delta,) = _closePosition(key, liquidity, hookData);
+        _closePosition(key, liquidity, hookData);
 
-        // transfer funds to recipient, must use ERC6909 because the swapper has not transferred ERC20 yet
-        poolManager.mint(_recipient(), key.currency0.toId(), uint256(int256(delta.amount0())));
-        poolManager.mint(_recipient(), key.currency1.toId(), uint256(int256(delta.amount1())));
+        int256 delta0 = poolManager.currencyDelta(address(this), key.currency0);
+        int256 delta1 = poolManager.currencyDelta(address(this), key.currency1);
+
+        if (delta0 < 0) {
+            // pay currency
+            _sendToPoolManager(key.currency0, uint256(-delta0));
+        } else if (delta0 > 0) {
+            // transfer funds to recipient, must use ERC6909 because the swapper has not transferred ERC20 yet
+            poolManager.mint(_recipient(), key.currency0.toId(), uint256(delta0));
+        }
+
+        if (delta1 < 0) {
+            // pay currency
+            _sendToPoolManager(key.currency1, uint256(-delta1));
+        } else if (delta1 > 0) {
+            // transfer funds to recipient, must use ERC6909 because the swapper has not transferred ERC20 yet
+            poolManager.mint(_recipient(), key.currency1.toId(), uint256(delta1));
+        }
 
         return (BaseHook.afterSwap.selector, 0);
     }
