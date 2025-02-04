@@ -91,12 +91,6 @@ contract EulerSwapHookTest2 is EulerTestBase, Fixtures {
         uint128 liquidity = manager.getLiquidity(poolId);
         assertEq(liquidity, 0);
 
-        // 😏 Alice approves funds for JIT position 😏
-        vm.startPrank(alice);
-        IERC20(Currency.unwrap(currency0)).approve(address(hook), 1000e18);
-        IERC20(Currency.unwrap(currency1)).approve(address(hook), 1000e18);
-        vm.stopPrank();
-
         Currency inputCurrency = zeroForOne ? currency0 : currency1;
         Currency outputCurrency = zeroForOne ? currency1 : currency0;
         uint256 inputBalanceBefore = inputCurrency.balanceOfSelf();
