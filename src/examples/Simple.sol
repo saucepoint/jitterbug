@@ -23,7 +23,7 @@ contract Simple is JITHook {
     }
 
     /// @inheritdoc JITHook
-    function _pull(PoolKey calldata key, IPoolManager.SwapParams calldata /*params*/)
+    function _pull(PoolKey calldata key, IPoolManager.SwapParams calldata /*swapParams*/)
         internal
         override
         returns (address excessRecipient, uint128 amount0, uint128 amount1)
