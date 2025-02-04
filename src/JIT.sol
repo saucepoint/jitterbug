@@ -25,7 +25,7 @@ abstract contract JIT is ImmutableState {
     /// @param sqrtPriceX96 The current sqrt price of the pool
     /// @return tickLower The lower tick of the JIT position
     /// @return tickUpper The upper tick of the JIT position
-    function _getTickRange(PoolKey memory key, uint160 sqrtPriceX96)
+    function _getTickRange(PoolKey memory key, uint128 amount0, uint128 amount1, uint160 sqrtPriceX96)
         internal
         view
         virtual
@@ -37,7 +37,7 @@ abstract contract JIT is ImmutableState {
         returns (BalanceDelta delta, BalanceDelta feesAccrued, uint128 liquidity)
     {
         (uint160 sqrtPriceX96,,,) = poolManager.getSlot0(key.toId());
-        (int24 tickLower, int24 tickUpper) = _getTickRange(key, sqrtPriceX96);
+        (int24 tickLower, int24 tickUpper) = _getTickRange(key, amount0, amount1, sqrtPriceX96);
 
         liquidity = LiquidityAmounts.getLiquidityForAmounts(
             sqrtPriceX96,

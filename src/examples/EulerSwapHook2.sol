@@ -18,7 +18,7 @@ import {EVCUtil} from "evc/utils/EVCUtil.sol";
 import {JIT} from "../JIT.sol";
 import {JITHook} from "../JITHook.sol";
 
-contract EulerSwapHook is JITHook, EVCUtil {
+contract EulerSwapHook2 is JITHook, EVCUtil {
     using CustomRevert for bytes4;
 
     address public immutable vault0;
@@ -62,12 +62,14 @@ contract EulerSwapHook is JITHook, EVCUtil {
     {
         excessRecipient = swapAccount;
 
-        amount0 = uint128(100e18);
-        amount1 = uint128(100e18);
+        (, Currency outputCurrency, uint256 amount) = _getInputOutputAndAmount(key, params);
 
         // transferFrom: depositor's currency0 and currency1 to the PoolManager
-        amount0 = _sendToPoolManager(vault0, key.currency0, amount0);
-        amount1 = _sendToPoolManager(vault1, key.currency1, amount1);
+        if (outputCurrency == key.currency0) {
+            amount0 = _sendToPoolManager(vault0, key.currency0, uint128(amount));
+        } else {
+            amount1 = _sendToPoolManager(vault1, key.currency1, uint128(amount));
+        }
     }
 
     /// @inheritdoc JITHook
@@ -75,39 +77,69 @@ contract EulerSwapHook is JITHook, EVCUtil {
         return swapAccount;
     }
 
-    /// @dev computes the tick range of the JIT position by returning ticks as +/- 10% of spot price
+    /// @dev computes the tick range of the JIT position
+    ///      If providing both tokens, return ticks as +/- 10% of spot price
+    ///      If providing amount0 of tokens0 only, return ticks -10%-0%
+    ///      If providing amount1 of token1 only, return ticks 0%-10%
     /// @inheritdoc JIT
-    function _getTickRange(PoolKey memory poolKey, uint128, /*amount0*/ uint128, /*amount1*/ uint160 sqrtPriceX96)
+    function _getTickRange(PoolKey memory poolKey, uint128 amount0, uint128 amount1, uint160 sqrtPriceX96)
         internal
         pure
         override
         returns (int24 tickLower, int24 tickUpper)
     {
-        // calculating sqrt(price * 0.9e18/1e18) * Q96 is the same as
-        // (sqrt(price) * Q96) * (sqrt(0.9e18/1e18))
-        // (sqrt(price) * Q96) * (sqrt(0.9e18) / sqrt(1e18))
-        uint160 _sqrtPriceLower = uint160(
-            FixedPointMathLib.mulDivDown(
-                uint256(sqrtPriceX96), FixedPointMathLib.sqrt(0.9e18), FixedPointMathLib.sqrt(1e18)
-            )
-        );
+        if (amount0 > 0 && amount1 > 0) {
+            // Both tokens: provide liquidity in -10% to +10% range
+            uint160 _sqrtPriceLower = uint160(
+                FixedPointMathLib.mulDivDown(
+                    uint256(sqrtPriceX96), FixedPointMathLib.sqrt(0.9e18), FixedPointMathLib.sqrt(1e18)
+                )
+            );
 
-        // calculating sqrt(price * 1.1) * Q96 is the same as
-        // (sqrt(price) * Q96) * (sqrt(1.1e18/1e18))
-        // (sqrt(price) * Q96) * (sqrt(1.1e18) / sqrt(1e18))
-        uint160 _sqrtPriceUpper = uint160(
-            FixedPointMathLib.mulDivDown(
-                uint256(sqrtPriceX96), FixedPointMathLib.sqrt(1.1e18), FixedPointMathLib.sqrt(1e18)
-            )
-        );
+            uint160 _sqrtPriceUpper = uint160(
+                FixedPointMathLib.mulDivDown(
+                    uint256(sqrtPriceX96), FixedPointMathLib.sqrt(1.1e18), FixedPointMathLib.sqrt(1e18)
+                )
+            );
 
-        int24 _tickLowerUnaligned = TickMath.getTickAtSqrtPrice(_sqrtPriceLower);
-        int24 _tickUpperUnaligned = TickMath.getTickAtSqrtPrice(_sqrtPriceUpper);
+            int24 _tickLowerUnaligned = TickMath.getTickAtSqrtPrice(_sqrtPriceLower);
+            int24 _tickUpperUnaligned = TickMath.getTickAtSqrtPrice(_sqrtPriceUpper);
 
-        // align the ticks to the tick spacing
-        int24 tickSpacing = poolKey.tickSpacing;
-        tickLower = _alignTick(_tickLowerUnaligned, tickSpacing);
-        tickUpper = _alignTick(_tickUpperUnaligned, tickSpacing);
+            // align the ticks to the tick spacing
+            int24 tickSpacing = poolKey.tickSpacing;
+            tickLower = _alignTick(_tickLowerUnaligned, tickSpacing);
+            tickUpper = _alignTick(_tickUpperUnaligned, tickSpacing);
+        } else if (amount0 > 0) {
+            // Only token0: provide liquidity in -10% to 0% range
+            uint160 _sqrtPriceLower = uint160(
+                FixedPointMathLib.mulDivDown(
+                    uint256(sqrtPriceX96), FixedPointMathLib.sqrt(0.9e18), FixedPointMathLib.sqrt(1e18)
+                )
+            );
+
+            int24 _tickLowerUnaligned = TickMath.getTickAtSqrtPrice(_sqrtPriceLower);
+            int24 _tickUpperUnaligned = TickMath.getTickAtSqrtPrice(sqrtPriceX96);
+
+            // align the ticks to the tick spacing
+            int24 tickSpacing = poolKey.tickSpacing;
+            tickLower = _alignTick(_tickLowerUnaligned, tickSpacing);
+            tickUpper = _alignTick(_tickUpperUnaligned, tickSpacing);
+        } else {
+            // Only token1: provide liquidity in 0% to +10% range
+            uint160 _sqrtPriceUpper = uint160(
+                FixedPointMathLib.mulDivDown(
+                    uint256(sqrtPriceX96), FixedPointMathLib.sqrt(1.1e18), FixedPointMathLib.sqrt(1e18)
+                )
+            );
+
+            int24 _tickLowerUnaligned = TickMath.getTickAtSqrtPrice(sqrtPriceX96);
+            int24 _tickUpperUnaligned = TickMath.getTickAtSqrtPrice(_sqrtPriceUpper);
+
+            // align the ticks to the tick spacing
+            int24 tickSpacing = poolKey.tickSpacing;
+            tickLower = _alignTick(_tickLowerUnaligned, tickSpacing);
+            tickUpper = _alignTick(_tickUpperUnaligned, tickSpacing);
+        }
     }
 
     // Utility Functions
