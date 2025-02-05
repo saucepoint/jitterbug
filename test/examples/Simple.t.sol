@@ -13,6 +13,7 @@ import {PoolId} from "v4-core/src/types/PoolId.sol";
 import {CurrencyLibrary, Currency} from "v4-core/src/types/Currency.sol";
 import {Simple} from "../../src/examples/Simple.sol";
 import {StateLibrary} from "v4-core/src/libraries/StateLibrary.sol";
+import {PoolSwapTest} from "v4-core/src/test/PoolSwapTest.sol";
 
 import {IPositionManager} from "v4-periphery/src/interfaces/IPositionManager.sol";
 import {Fixtures} from "../utils/Fixtures.sol";
@@ -74,5 +75,30 @@ contract SimpleTest is Test, Fixtures {
         // 🤑 Liquidity created just in time 🤑
         assertEq(inputBalanceBefore - inputCurrency.balanceOfSelf(), 1e18);
         assertApproxEqRel(outputCurrency.balanceOfSelf() - outputBalanceBefore, 1e18, 0.05e18);
+    }
+
+    function test_gas_simple_zeroForOne() public {
+        // 🤔 No liquidity 🤔
+        uint128 liquidity = manager.getLiquidity(poolId);
+        assertEq(liquidity, 0);
+
+        // 😏 Alice approves funds for JIT position 😏
+        vm.startPrank(alice);
+        IERC20(Currency.unwrap(currency0)).approve(address(hook), 1000e18);
+        IERC20(Currency.unwrap(currency1)).approve(address(hook), 1000e18);
+        vm.stopPrank();
+
+        // Perform a test swap //
+        bool zeroForOne = true;
+        int256 amountSpecified = -1e18;
+        IPoolManager.SwapParams memory params = IPoolManager.SwapParams({
+            zeroForOne: zeroForOne,
+            amountSpecified: amountSpecified,
+            sqrtPriceLimitX96: zeroForOne ? MIN_PRICE_LIMIT : MAX_PRICE_LIMIT
+        });
+        PoolSwapTest.TestSettings memory settings =
+            PoolSwapTest.TestSettings({takeClaims: false, settleUsingBurn: false});
+        swapRouter.swap(key, params, settings, ZERO_BYTES);
+        vm.snapshotGasLastCall("swap_simple_exact_input_zeroForOne");
     }
 }
