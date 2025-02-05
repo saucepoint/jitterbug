@@ -27,7 +27,7 @@ abstract contract JIT is ImmutableState {
     /// @return tickLower The lower tick of the JIT position
     /// @return tickUpper The upper tick of the JIT position
     function _getTickRange(
-        PoolKey memory key,
+        PoolKey calldata key,
         IPoolManager.SwapParams calldata params,
         uint128 amount0,
         uint128 amount1,
@@ -35,7 +35,7 @@ abstract contract JIT is ImmutableState {
     ) internal view virtual returns (int24 tickLower, int24 tickUpper);
 
     function _createPosition(
-        PoolKey memory key,
+        PoolKey calldata key,
         IPoolManager.SwapParams calldata params,
         uint128 amount0,
         uint128 amount1,
@@ -55,7 +55,7 @@ abstract contract JIT is ImmutableState {
         (delta, feesAccrued) = _modifyLiquidity(key, tickLower, tickUpper, int256(uint256(liquidity)), hookDataOpen);
     }
 
-    function _closePosition(PoolKey memory key, uint128 liquidityToClose, bytes calldata hookDataClose)
+    function _closePosition(PoolKey calldata key, uint128 liquidityToClose, bytes calldata hookDataClose)
         internal
         virtual
         returns (BalanceDelta delta, BalanceDelta feesAccrued)
