@@ -51,7 +51,7 @@ abstract contract JITHook is JIT {
         (address excessRecipient, uint128 amount0, uint128 amount1) = _pull(key, params);
 
         // create JIT position
-        (,, uint128 liquidity) = _createPosition(key, amount0, amount1, hookData);
+        (,, uint128 liquidity) = _createPosition(key, params, amount0, amount1, hookData);
         _storeLiquidity(liquidity);
 
         // refund excess tokens to recipient
