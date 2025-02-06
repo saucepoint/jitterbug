@@ -3,8 +3,6 @@ pragma solidity ^0.8.24;
 
 import {BaseHook} from "v4-periphery/src/base/hooks/BaseHook.sol";
 
-import "forge-std/console2.sol";
-
 import {Hooks} from "v4-core/src/libraries/Hooks.sol";
 import {IHooks} from "v4-core/src/interfaces/IHooks.sol";
 import {TransientStateLibrary} from "v4-core/src/libraries/TransientStateLibrary.sol";
@@ -50,9 +48,6 @@ abstract contract JITHook is JIT {
     {
         // transfer Currency from a source to PoolManager and then create a liquidity position
         (address excessRecipient, uint128 amount0, uint128 amount1) = _pull(key, params);
-
-        console2.log("amount0", amount0);
-        console2.log("amount1", amount1);
 
         // create JIT position
         (,, uint128 liquidity) = _createPosition(key, amount0, amount1, hookData);

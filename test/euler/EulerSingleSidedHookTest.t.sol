@@ -11,7 +11,7 @@ import {PoolKey} from "v4-core/src/types/PoolKey.sol";
 import {BalanceDelta} from "v4-core/src/types/BalanceDelta.sol";
 import {PoolId} from "v4-core/src/types/PoolId.sol";
 import {CurrencyLibrary, Currency} from "v4-core/src/types/Currency.sol";
-import {EulerSwapHook2} from "../../src/examples/EulerSwapHook2.sol";
+import {EulerSingleSidedHook} from "../../src/examples/euler/EulerSingleSidedHook.sol";
 import {StateLibrary} from "v4-core/src/libraries/StateLibrary.sol";
 
 import {IPositionManager} from "v4-periphery/src/interfaces/IPositionManager.sol";
@@ -19,14 +19,14 @@ import {Fixtures} from "../utils/Fixtures.sol";
 
 import {IEVault, EulerTestBase, IRMTestDefault} from "./EulerTestBase.t.sol";
 
-contract EulerSwapHookTest2 is EulerTestBase, Fixtures {
+contract EulerSingleSidedHookTest is EulerTestBase, Fixtures {
     using CurrencyLibrary for Currency;
     using StateLibrary for IPoolManager;
 
     IEVault public currency0Vault;
     IEVault public currency1Vault;
 
-    EulerSwapHook2 hook;
+    EulerSingleSidedHook hook;
     PoolId poolId;
 
     address alice = makeAddr("ALICE");
@@ -66,8 +66,8 @@ contract EulerSwapHookTest2 is EulerTestBase, Fixtures {
             uint160(Hooks.BEFORE_SWAP_FLAG | Hooks.AFTER_SWAP_FLAG) ^ (0x4444 << 144) // Namespace the hook to avoid collisions
         );
         bytes memory constructorArgs = abi.encode(evc, manager, currency0Vault, currency1Vault, alice); //Add all the necessary constructor arguments from the hook
-        deployCodeTo("examples/EulerSwapHook.sol:EulerSwapHook", constructorArgs, flags);
-        hook = EulerSwapHook2(flags);
+        deployCodeTo("examples/euler/EulerSingleSidedHook.sol:EulerSingleSidedHook", constructorArgs, flags);
+        hook = EulerSingleSidedHook(flags);
 
         // Create the pool
         key = PoolKey(currency0, currency1, 3000, 60, IHooks(address(hook)));

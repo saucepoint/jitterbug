@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "forge-std/console2.sol";
-
 import {IPoolManager} from "v4-core/src/interfaces/IPoolManager.sol";
 import {PoolKey} from "v4-core/src/types/PoolKey.sol";
 import {BalanceDelta} from "v4-core/src/types/BalanceDelta.sol";
@@ -39,6 +37,7 @@ abstract contract JIT is ImmutableState {
         (uint160 sqrtPriceX96,,,) = poolManager.getSlot0(key.toId());
         (int24 tickLower, int24 tickUpper) = _getTickRange(key, amount0, amount1, sqrtPriceX96);
 
+        // TODO: Check if this is correct
         liquidity = LiquidityAmounts.getLiquidityForAmounts(
             sqrtPriceX96,
             TickMath.getSqrtPriceAtTick(tickLower),
@@ -46,7 +45,6 @@ abstract contract JIT is ImmutableState {
             amount0,
             amount1
         );
-        console2.log("liquidity", liquidity);
         _storeTicks(tickLower, tickUpper);
         (delta, feesAccrued) = _modifyLiquidity(key, tickLower, tickUpper, int256(uint256(liquidity)), hookDataOpen);
     }
