@@ -39,7 +39,6 @@ abstract contract JIT is ImmutableState {
         (uint160 sqrtPriceX96,,,) = poolManager.getSlot0(key.toId());
         (int24 tickLower, int24 tickUpper) = _getTickRange(key, amount0, amount1, sqrtPriceX96);
 
-        // TODO: Check if this is correct
         liquidity = LiquidityAmounts.getLiquidityForAmounts(
             sqrtPriceX96,
             TickMath.getSqrtPriceAtTick(tickLower),
