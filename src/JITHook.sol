@@ -28,10 +28,11 @@ abstract contract JITHook is JIT {
 
     /// @notice Pull funds for the JIT position
     /// @dev override and pull funds from a source and transfer them to PoolManager
+    /// @param swapParams the swap params passed in during swap
     /// @return excessRecipient the recipient of excess tokens, in the event that pulled capital does not perfectly match the JIT position's capital requirements
     /// @return amount0 the amount of currency0 pulled into the JIT position
     /// @return amount1 the amount of currency1 pulled into the JIT position
-    function _pull(PoolKey calldata key, IPoolManager.SwapParams calldata params)
+    function _pull(PoolKey calldata key, IPoolManager.SwapParams calldata swapParams)
         internal
         virtual
         returns (address, uint128, uint128);

@@ -20,6 +20,8 @@ abstract contract JIT is ImmutableState {
 
     /// @notice Determine the tick range for the JIT position
     /// @param key The pool key
+    /// @param amount0 the currency0 amount
+    /// @param amount1 the currency1 amount
     /// @param sqrtPriceX96 The current sqrt price of the pool
     /// @return tickLower The lower tick of the JIT position
     /// @return tickUpper The upper tick of the JIT position
