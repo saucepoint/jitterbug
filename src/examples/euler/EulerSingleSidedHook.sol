@@ -48,38 +48,16 @@ contract EulerSingleSidedHook is JITHook, EulerUtils {
     }
 
     /// @dev computes the tick range of the JIT position
-    ///      If providing both tokens, return ticks as +/- 8% of spot price
     ///      If providing amount0 of tokens0 only, return ticks current to +8%
     ///      If providing amount1 of token1 only, return ticks -8% to current
     /// @inheritdoc JIT
-    function _getTickRange(PoolKey memory poolKey, uint128 amount0, uint128 amount1, uint160 sqrtPriceX96)
+    function _getTickRange(PoolKey memory poolKey, uint128 amount0, uint128 /*amount1*/, uint160 sqrtPriceX96)
         internal
         pure
         override
         returns (int24 tickLower, int24 tickUpper)
     {
-        if (amount0 > 0 && amount1 > 0) {
-            // Both tokens: provide liquidity in -8% to +8% range
-            uint160 _sqrtPriceLower = uint160(
-                FixedPointMathLib.mulDivDown(
-                    uint256(sqrtPriceX96), FixedPointMathLib.sqrt(0.92e18), FixedPointMathLib.sqrt(1e18)
-                )
-            );
-
-            uint160 _sqrtPriceUpper = uint160(
-                FixedPointMathLib.mulDivDown(
-                    uint256(sqrtPriceX96), FixedPointMathLib.sqrt(1.08e18), FixedPointMathLib.sqrt(1e18)
-                )
-            );
-
-            int24 _tickLowerUnaligned = TickMath.getTickAtSqrtPrice(_sqrtPriceLower);
-            int24 _tickUpperUnaligned = TickMath.getTickAtSqrtPrice(_sqrtPriceUpper);
-
-            // align the ticks to the tick spacing
-            int24 tickSpacing = poolKey.tickSpacing;
-            tickLower = _alignTick(_tickLowerUnaligned, tickSpacing);
-            tickUpper = _alignTick(_tickUpperUnaligned, tickSpacing);
-        } else if (amount0 > 0) {
+        if (amount0 > 0) {
             // Only token0: provide liquidity in current to +8% range
             uint160 _sqrtPriceUpper = uint160(
                 FixedPointMathLib.mulDivDown(
