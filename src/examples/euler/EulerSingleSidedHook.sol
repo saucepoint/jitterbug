@@ -25,14 +25,14 @@ contract EulerSingleSidedHook is JITHook, EulerUtils {
     {}
 
     /// @inheritdoc JITHook
-    function _pull(PoolKey calldata key, IPoolManager.SwapParams calldata params)
+    function _pull(PoolKey calldata key, IPoolManager.SwapParams calldata swapParams)
         internal
         override
         returns (address excessRecipient, uint128 amount0, uint128 amount1)
     {
         excessRecipient = swapAccount;
 
-        (, Currency outputCurrency, uint256 amount) = _getInputOutputAndAmount(key, params);
+        (, Currency outputCurrency, uint256 amount) = _getInputOutputAndAmount(key, swapParams);
 
         // transferFrom: depositor's currency0 or currency1 to the PoolManager based on currency-out from the pool
         if (outputCurrency == key.currency0) {
