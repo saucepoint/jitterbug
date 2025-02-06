@@ -31,12 +31,9 @@ contract EulerFullRangeHook is JITHook, EulerUtils {
     {
         excessRecipient = swapAccount;
 
-        amount0 = uint128(100e18);
-        amount1 = uint128(100e18);
-
-        // transferFrom: depositor's currency0 and currency1 to the PoolManager
-        amount0 = _sendToPoolManager(vault0, key.currency0, amount0);
-        amount1 = _sendToPoolManager(vault1, key.currency1, amount1);
+        // transfer all max available balance deposited into Euler vault to PoolManager
+        amount0 = _sendToPoolManager(vault0, key.currency0, type(uint128).max);
+        amount1 = _sendToPoolManager(vault1, key.currency1, type(uint128).max);
     }
 
     /// @inheritdoc JITHook
