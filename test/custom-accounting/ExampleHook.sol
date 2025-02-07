@@ -11,10 +11,12 @@ import {Currency} from "v4-core/src/types/Currency.sol";
 import {CurrencySettler} from "v4-core/test/utils/CurrencySettler.sol";
 import {BaseTestHooks} from "v4-core/src/test/BaseTestHooks.sol";
 import {Currency} from "v4-core/src/types/Currency.sol";
+import {SwapParser} from "../../src/utils/SwapParser.sol";
 
 contract ExampleHook is BaseTestHooks {
     using Hooks for IHooks;
     using CurrencySettler for Currency;
+    using SwapParser for PoolKey;
 
     IPoolManager immutable manager;
 
@@ -33,7 +35,7 @@ contract ExampleHook is BaseTestHooks {
         IPoolManager.SwapParams calldata params,
         bytes calldata /* hookData **/
     ) external override onlyPoolManager returns (bytes4, BeforeSwapDelta, uint24) {
-        (Currency inputCurrency, Currency outputCurrency, uint256 amount) = _getInputOutputAndAmount(key, params);
+        (Currency inputCurrency, Currency outputCurrency, uint256 amount) = key.getInputOutputAndAmount(params);
 
         // this "custom curve" is a line, 1-1
         // take the full input amount, and give the full output amount
@@ -44,15 +46,5 @@ contract ExampleHook is BaseTestHooks {
         // return -amountSpecified as specified to no-op the concentrated liquidity swap
         BeforeSwapDelta hookDelta = toBeforeSwapDelta(int128(-params.amountSpecified), int128(params.amountSpecified));
         return (IHooks.beforeSwap.selector, hookDelta, 0);
-    }
-
-    function _getInputOutputAndAmount(PoolKey calldata key, IPoolManager.SwapParams calldata params)
-        internal
-        pure
-        returns (Currency input, Currency output, uint256 amount)
-    {
-        (input, output) = params.zeroForOne ? (key.currency0, key.currency1) : (key.currency1, key.currency0);
-
-        amount = params.amountSpecified < 0 ? uint256(-params.amountSpecified) : uint256(params.amountSpecified);
     }
 }
