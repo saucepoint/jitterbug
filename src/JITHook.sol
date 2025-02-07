@@ -43,7 +43,7 @@ abstract contract JITHook is JIT {
 
     /// @notice The recipient of funds after the JIT position is closed
     /// @dev Inheriting contract should override and specify recipient of the JIT position
-    /// @return the recipient of the JIT position's funds
+    /// @return recipient of the JIT position's funds
     function _recipient() internal view virtual returns (address);
 
     // TODO: restrict onlyByManager
