@@ -22,6 +22,7 @@ contract Simple is JITHook {
         depositor = _depositor;
     }
 
+    /// @dev Defines the amount of tokens to be used in the JIT position
     /// @inheritdoc JITHook
     function _jitAmounts(PoolKey calldata, /*key*/ IPoolManager.SwapParams calldata /*swapParams*/ )
         internal
@@ -33,6 +34,7 @@ contract Simple is JITHook {
         amount1 = uint128(100e18);
     }
 
+    /// @dev Example logic for sending money to PoolManager, from an arbitrary capital source (EOA)
     /// @inheritdoc JITHook
     function _sendToPoolManager(Currency currency, uint256 amount) internal override {
         poolManager.sync(currency);
@@ -40,6 +42,7 @@ contract Simple is JITHook {
         poolManager.settle();
     }
 
+    /// @dev Defines the recipient of the JIT position once its closed
     /// @inheritdoc JITHook
     function _recipient() internal view override returns (address) {
         return depositor;
