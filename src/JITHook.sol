@@ -28,12 +28,14 @@ abstract contract JITHook is JIT {
 
     /// @notice Pull funds for the JIT position
     /// @dev override and pull funds from a source and transfer them to PoolManager
-    /// @param currency0 the first currency of the pool
-    /// @param currency1 the second currency of the pool
+    /// @param swapParams the swap params passed in during swap
     /// @return excessRecipient the recipient of excess tokens, in the event that pulled capital does not perfectly match the JIT position's capital requirements
     /// @return amount0 the amount of currency0 pulled into the JIT position
     /// @return amount1 the amount of currency1 pulled into the JIT position
-    function _pull(Currency currency0, Currency currency1) internal virtual returns (address, uint128, uint128);
+    function _pull(PoolKey calldata key, IPoolManager.SwapParams calldata swapParams)
+        internal
+        virtual
+        returns (address, uint128, uint128);
 
     function _sendToPoolManager(Currency currency, uint256 amount) internal virtual;
 
@@ -43,15 +45,15 @@ abstract contract JITHook is JIT {
     function _recipient() internal view virtual returns (address);
 
     // TODO: restrict onlyByManager
-    function beforeSwap(address, PoolKey calldata key, IPoolManager.SwapParams calldata, bytes calldata hookData)
+    function beforeSwap(address, PoolKey calldata key, IPoolManager.SwapParams calldata params, bytes calldata hookData)
         external
         returns (bytes4, BeforeSwapDelta, uint24)
     {
         // transfer Currency from a source to PoolManager and then create a liquidity position
-        (address excessRecipient, uint128 amount0, uint128 amount1) = _pull(key.currency0, key.currency1);
+        (address excessRecipient, uint128 amount0, uint128 amount1) = _pull(key, params);
 
         // create JIT position
-        (,, uint128 liquidity) = _createPosition(key, amount0, amount1, hookData);
+        (,, uint128 liquidity) = _createPosition(key, params, amount0, amount1, hookData);
         _storeLiquidity(liquidity);
 
         return (BaseHook.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, 0);

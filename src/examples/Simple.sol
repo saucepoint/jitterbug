@@ -23,12 +23,14 @@ contract Simple is JITHook {
     }
 
     /// @inheritdoc JITHook
-    function _pull(Currency currency0, Currency currency1)
+    function _pull(PoolKey calldata, /*key*/ IPoolManager.SwapParams calldata /*swapParams*/ )
         internal
+        view
         override
         returns (address excessRecipient, uint128 amount0, uint128 amount1)
     {
         excessRecipient = depositor;
+
         amount0 = uint128(100e18);
         amount1 = uint128(100e18);
     }
@@ -40,12 +42,13 @@ contract Simple is JITHook {
 
     /// @dev computes the tick range of the JIT position by returning ticks as +/- 10% of spot price
     /// @inheritdoc JIT
-    function _getTickRange(PoolKey memory poolKey, uint160 sqrtPriceX96)
-        internal
-        pure
-        override
-        returns (int24 tickLower, int24 tickUpper)
-    {
+    function _getTickRange(
+        PoolKey calldata poolKey,
+        IPoolManager.SwapParams calldata, /*swapParams*/
+        uint128, /*amount0*/
+        uint128, /*amount1*/
+        uint160 sqrtPriceX96
+    ) internal pure override returns (int24 tickLower, int24 tickUpper) {
         // calculating sqrt(price * 0.9e18/1e18) * Q96 is the same as
         // (sqrt(price) * Q96) * (sqrt(0.9e18/1e18))
         // (sqrt(price) * Q96) * (sqrt(0.9e18) / sqrt(1e18))

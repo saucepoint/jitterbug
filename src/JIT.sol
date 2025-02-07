@@ -20,22 +20,29 @@ abstract contract JIT is ImmutableState {
 
     /// @notice Determine the tick range for the JIT position
     /// @param key The pool key
+    /// @param params The IPoolManager.SwapParams of the current swap. Includes trade size and direction
+    /// @param amount0 the currency0 amount
+    /// @param amount1 the currency1 amount
     /// @param sqrtPriceX96 The current sqrt price of the pool
     /// @return tickLower The lower tick of the JIT position
     /// @return tickUpper The upper tick of the JIT position
-    function _getTickRange(PoolKey memory key, uint160 sqrtPriceX96)
-        internal
-        view
-        virtual
-        returns (int24 tickLower, int24 tickUpper);
+    function _getTickRange(
+        PoolKey calldata key,
+        IPoolManager.SwapParams calldata params,
+        uint128 amount0,
+        uint128 amount1,
+        uint160 sqrtPriceX96
+    ) internal view virtual returns (int24 tickLower, int24 tickUpper);
 
-    function _createPosition(PoolKey memory key, uint128 amount0, uint128 amount1, bytes calldata hookDataOpen)
-        internal
-        virtual
-        returns (BalanceDelta delta, BalanceDelta feesAccrued, uint128 liquidity)
-    {
+    function _createPosition(
+        PoolKey calldata key,
+        IPoolManager.SwapParams calldata params,
+        uint128 amount0,
+        uint128 amount1,
+        bytes calldata hookDataOpen
+    ) internal virtual returns (BalanceDelta delta, BalanceDelta feesAccrued, uint128 liquidity) {
         (uint160 sqrtPriceX96,,,) = poolManager.getSlot0(key.toId());
-        (int24 tickLower, int24 tickUpper) = _getTickRange(key, sqrtPriceX96);
+        (int24 tickLower, int24 tickUpper) = _getTickRange(key, params, amount0, amount1, sqrtPriceX96);
 
         liquidity = LiquidityAmounts.getLiquidityForAmounts(
             sqrtPriceX96,
@@ -48,7 +55,7 @@ abstract contract JIT is ImmutableState {
         (delta, feesAccrued) = _modifyLiquidity(key, tickLower, tickUpper, int256(uint256(liquidity)), hookDataOpen);
     }
 
-    function _closePosition(PoolKey memory key, uint128 liquidityToClose, bytes calldata hookDataClose)
+    function _closePosition(PoolKey calldata key, uint128 liquidityToClose, bytes calldata hookDataClose)
         internal
         virtual
         returns (BalanceDelta delta, BalanceDelta feesAccrued)
