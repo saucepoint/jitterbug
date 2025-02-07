@@ -26,17 +26,19 @@ abstract contract JITHook is JIT {
         Hooks.validateHookPermissions(IHooks(address(this)), getHookPermissions());
     }
 
-    /// @notice Pull funds for the JIT position
-    /// @dev override and pull funds from a source and transfer them to PoolManager
+    /// @notice Defines the amount of tokens to be used in the JIT position
+    /// @dev No tokens should be transferred into the PoolManager by this function. The afterSwap implementation, will handle token flows
     /// @param swapParams the swap params passed in during swap
-    /// @return excessRecipient the recipient of excess tokens, in the event that pulled capital does not perfectly match the JIT position's capital requirements
     /// @return amount0 the amount of currency0 pulled into the JIT position
     /// @return amount1 the amount of currency1 pulled into the JIT position
-    function _pull(PoolKey calldata key, IPoolManager.SwapParams calldata swapParams)
+    function _jitAmounts(PoolKey calldata key, IPoolManager.SwapParams calldata swapParams)
         internal
         virtual
-        returns (address, uint128, uint128);
+        returns (uint128, uint128);
 
+    /// @notice Defines logic to send external capital to the PoolManager, to settle the JIT position
+    /// @param currency The currency being sent into the PoolManager
+    /// @param amount The amount of currency being sent into the PoolManager
     function _sendToPoolManager(Currency currency, uint256 amount) internal virtual;
 
     /// @notice The recipient of funds after the JIT position is closed
@@ -50,7 +52,7 @@ abstract contract JITHook is JIT {
         returns (bytes4, BeforeSwapDelta, uint24)
     {
         // transfer Currency from a source to PoolManager and then create a liquidity position
-        (address excessRecipient, uint128 amount0, uint128 amount1) = _pull(key, params);
+        (uint128 amount0, uint128 amount1) = _jitAmounts(key, params);
 
         // create JIT position
         (,, uint128 liquidity) = _createPosition(key, params, amount0, amount1, hookData);
@@ -71,6 +73,7 @@ abstract contract JITHook is JIT {
         uint128 liquidity = _loadLiquidity();
         _closePosition(key, liquidity, hookData);
 
+        // TODO: possibly optimizable with a single exttload call
         int256 delta0 = poolManager.currencyDelta(address(this), key.currency0);
         int256 delta1 = poolManager.currencyDelta(address(this), key.currency1);
 

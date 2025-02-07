@@ -23,16 +23,21 @@ contract Simple is JITHook {
     }
 
     /// @inheritdoc JITHook
-    function _pull(PoolKey calldata, /*key*/ IPoolManager.SwapParams calldata /*swapParams*/ )
+    function _jitAmounts(PoolKey calldata, /*key*/ IPoolManager.SwapParams calldata /*swapParams*/ )
         internal
-        view
+        pure
         override
-        returns (address excessRecipient, uint128 amount0, uint128 amount1)
+        returns (uint128 amount0, uint128 amount1)
     {
-        excessRecipient = depositor;
-
         amount0 = uint128(100e18);
         amount1 = uint128(100e18);
+    }
+
+    /// @inheritdoc JITHook
+    function _sendToPoolManager(Currency currency, uint256 amount) internal override {
+        poolManager.sync(currency);
+        IERC20(Currency.unwrap(currency)).transferFrom(depositor, address(poolManager), amount);
+        poolManager.settle();
     }
 
     /// @inheritdoc JITHook
@@ -77,12 +82,6 @@ contract Simple is JITHook {
     }
 
     // Utility Functions
-
-    function _sendToPoolManager(Currency currency, uint256 amount) internal override {
-        poolManager.sync(currency);
-        IERC20(Currency.unwrap(currency)).transferFrom(depositor, address(poolManager), amount);
-        poolManager.settle();
-    }
 
     /// @dev NOT PRODUCTION READY. Incorrectly rounds ticks to 0
     /// Should be rounding consistently either towards spot price or away from spot price, regardless of sign
