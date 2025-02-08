@@ -22,22 +22,27 @@ contract Simple is JITHook {
         depositor = _depositor;
     }
 
+    /// @dev Defines the amount of tokens to be used in the JIT position
     /// @inheritdoc JITHook
-    function _pull(PoolKey calldata key, IPoolManager.SwapParams calldata /*swapParams*/ )
+    function _jitAmounts(PoolKey calldata, /*key*/ IPoolManager.SwapParams calldata /*swapParams*/ )
         internal
+        pure
         override
-        returns (address excessRecipient, uint128 amount0, uint128 amount1)
+        returns (uint128 amount0, uint128 amount1)
     {
-        excessRecipient = depositor;
-
         amount0 = uint128(100e18);
         amount1 = uint128(100e18);
-
-        // transferFrom: depositor's currency0 and currency1 to the PoolManager
-        _sendToPoolManager(key.currency0, amount0);
-        _sendToPoolManager(key.currency1, amount1);
     }
 
+    /// @dev Example logic for sending money to PoolManager, from an arbitrary capital source (EOA)
+    /// @inheritdoc JITHook
+    function _sendToPoolManager(Currency currency, uint256 amount) internal override {
+        poolManager.sync(currency);
+        IERC20(Currency.unwrap(currency)).transferFrom(depositor, address(poolManager), amount);
+        poolManager.settle();
+    }
+
+    /// @dev Defines the recipient of the JIT position once its closed
     /// @inheritdoc JITHook
     function _recipient() internal view override returns (address) {
         return depositor;
@@ -80,12 +85,6 @@ contract Simple is JITHook {
     }
 
     // Utility Functions
-
-    function _sendToPoolManager(Currency currency, uint128 amount) private {
-        poolManager.sync(currency);
-        IERC20(Currency.unwrap(currency)).transferFrom(depositor, address(poolManager), amount);
-        poolManager.settle();
-    }
 
     /// @dev NOT PRODUCTION READY. Incorrectly rounds ticks to 0
     /// Should be rounding consistently either towards spot price or away from spot price, regardless of sign
