@@ -6,6 +6,10 @@
 
 ---
 
+_Automatically provisions JIT liquidity [with set token amounts](https://github.com/saucepoint/jitterbug/blob/main/src/examples/Simple.sol#L25-L35) on a [defined tick range](https://github.com/saucepoint/jitterbug/blob/main/src/examples/Simple.sol#L51-L59), using capital from an [arbitrary source](https://github.com/saucepoint/jitterbug/blob/main/src/examples/Simple.sol#L37-L43)_
+
+---
+
 ![image](https://github.com/user-attachments/assets/9fcedd69-758c-4f0b-9895-ed7d6e824115)
 
 ---
