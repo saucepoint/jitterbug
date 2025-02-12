@@ -78,28 +78,23 @@ contract SimpleJITRouterTest is Test, Fixtures {
         assertApproxEqRel(outputCurrency.balanceOfSelf() - outputBalanceBefore, 1e18, 0.05e18);
     }
 
-    // function test_gas_simple_zeroForOne() public {
-    //     // 🤔 No liquidity 🤔
-    //     uint128 liquidity = manager.getLiquidity(poolId);
-    //     assertEq(liquidity, 0);
+    function test_gas_simpleRouter_zeroForOne() public {
+        // 🤔 No liquidity 🤔
+        uint128 liquidity = manager.getLiquidity(poolId);
+        assertEq(liquidity, 0);
 
-    //     // 😏 Alice approves funds for JIT position 😏
-    //     vm.startPrank(alice);
-    //     IERC20(Currency.unwrap(currency0)).approve(address(hook), 1000e18);
-    //     IERC20(Currency.unwrap(currency1)).approve(address(hook), 1000e18);
-    //     vm.stopPrank();
+        // 😏 Alice approves funds for JIT position 😏
+        vm.startPrank(alice);
+        IERC20(Currency.unwrap(currency0)).approve(address(jitRouter), 1000e18);
+        IERC20(Currency.unwrap(currency1)).approve(address(jitRouter), 1000e18);
+        vm.stopPrank();
 
-    //     // Perform a test swap //
-    //     bool zeroForOne = true;
-    //     int256 amountSpecified = -1e18;
-    //     IPoolManager.SwapParams memory params = IPoolManager.SwapParams({
-    //         zeroForOne: zeroForOne,
-    //         amountSpecified: amountSpecified,
-    //         sqrtPriceLimitX96: zeroForOne ? MIN_PRICE_LIMIT : MAX_PRICE_LIMIT
-    //     });
-    //     PoolSwapTest.TestSettings memory settings =
-    //         PoolSwapTest.TestSettings({takeClaims: false, settleUsingBurn: false});
-    //     swapRouter.swap(key, params, settings, ZERO_BYTES);
-    //     vm.snapshotGasLastCall("swap_simple_exact_input_zeroForOne");
-    // }
+        // Perform a test swap //
+        bool zeroForOne = true;
+        uint256 amountIn = 1e18; // amount of input tokens
+        uint256 amountOutMin = 0.99e18; // minimum amount of output tokens, otherwise revert
+        uint256 deadline = block.timestamp + 60; // deadline for the transaction to be mined
+        jitRouter.swapExactTokensForTokens(amountIn, amountOutMin, zeroForOne, key, ZERO_BYTES, address(this), deadline);
+        vm.snapshotGasLastCall("jitRouter_exactInput_zeroForOne");
+    }
 }
