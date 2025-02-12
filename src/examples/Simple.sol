@@ -51,8 +51,8 @@ contract Simple is JITHook {
     /// @dev computes the tick range of the JIT position by returning ticks as +/- 10% of spot price
     /// @inheritdoc JIT
     function _getTickRange(
-        PoolKey calldata poolKey,
-        IPoolManager.SwapParams calldata, /*swapParams*/
+        PoolKey memory poolKey,
+        IPoolManager.SwapParams memory, /*swapParams*/
         uint128, /*amount0*/
         uint128, /*amount1*/
         uint160 sqrtPriceX96
