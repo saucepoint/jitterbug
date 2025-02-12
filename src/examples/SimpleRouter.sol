@@ -9,22 +9,22 @@ import {Currency} from "v4-core/src/types/Currency.sol";
 import {TickMath} from "v4-core/src/libraries/TickMath.sol";
 
 import {JIT} from "../JIT.sol";
-import {JITHook} from "../JITHook.sol";
+import {JITRouter} from "../JITRouter.sol";
 
 /// @title Simple JIT Hook
 /// @notice Pulls funds from a specified address, create a JIT position, and transfers funds back to the deployer
 /// @dev JIT position is +/- 10% of the spot price
-contract Simple is JITHook {
+contract SimpleJITRouter is JITRouter {
     /// @dev Depositor should ERC20.approve this address
     address depositor;
 
-    constructor(IPoolManager _poolManager, address _depositor) JITHook(_poolManager) {
+    constructor(IPoolManager _poolManager, address _depositor) JITRouter(_poolManager) {
         depositor = _depositor;
     }
 
     /// @dev Defines the amount of tokens to be used in the JIT position
-    /// @inheritdoc JITHook
-    function _jitAmounts(PoolKey calldata, /*key*/ IPoolManager.SwapParams calldata /*swapParams*/ )
+    /// @inheritdoc JITRouter
+    function _jitAmounts(PoolKey memory, /*key*/ IPoolManager.SwapParams memory /*swapParams*/ )
         internal
         pure
         override
@@ -35,7 +35,7 @@ contract Simple is JITHook {
     }
 
     /// @dev Example logic for sending money to PoolManager, from an arbitrary capital source (EOA)
-    /// @inheritdoc JITHook
+    /// @inheritdoc JITRouter
     function _sendToPoolManager(Currency currency, uint256 amount) internal override {
         poolManager.sync(currency);
         IERC20(Currency.unwrap(currency)).transferFrom(depositor, address(poolManager), amount);
@@ -43,7 +43,7 @@ contract Simple is JITHook {
     }
 
     /// @dev Defines the recipient of the JIT position once its closed
-    /// @inheritdoc JITHook
+    /// @inheritdoc JITRouter
     function _recipient() internal view override returns (address) {
         return depositor;
     }

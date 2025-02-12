@@ -16,14 +16,18 @@ import {ImmutableState} from "v4-periphery/src/base/ImmutableState.sol";
 
 import {JIT} from "./JIT.sol";
 
-abstract contract JITHook is JIT {
+abstract contract JITHook is JIT, ImmutableState {
     using TransientStateLibrary for IPoolManager;
 
     bytes constant ZERO_BYTES = "";
 
-    constructor(IPoolManager _poolManager) JIT(_poolManager) {
+    constructor(IPoolManager poolManager_) ImmutableState(poolManager_) {
         // safety check that the hook address matches expected flags
         Hooks.validateHookPermissions(IHooks(address(this)), getHookPermissions());
+    }
+
+    function _poolManager() internal view override returns (IPoolManager) {
+        return poolManager;
     }
 
     /// @notice Defines the amount of tokens to be used in the JIT position

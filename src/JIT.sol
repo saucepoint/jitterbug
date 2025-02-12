@@ -10,13 +10,13 @@ import {LiquidityAmounts} from "v4-core/test/utils/LiquidityAmounts.sol";
 import {TickMath} from "v4-core/src/libraries/TickMath.sol";
 import {StateLibrary} from "v4-core/src/libraries/StateLibrary.sol";
 
-abstract contract JIT is ImmutableState {
+abstract contract JIT {
     using StateLibrary for IPoolManager;
 
     bytes32 constant TICK_LOWER_SLOT = keccak256("tickLower");
     bytes32 constant TICK_UPPER_SLOT = keccak256("tickUpper");
 
-    constructor(IPoolManager _manager) ImmutableState(_manager) {}
+    function _poolManager() internal view virtual returns (IPoolManager);
 
     /// @notice Determine the tick range for the JIT position
     /// @param key The pool key
@@ -27,21 +27,21 @@ abstract contract JIT is ImmutableState {
     /// @return tickLower The lower tick of the JIT position
     /// @return tickUpper The upper tick of the JIT position
     function _getTickRange(
-        PoolKey calldata key,
-        IPoolManager.SwapParams calldata params,
+        PoolKey memory key,
+        IPoolManager.SwapParams memory params,
         uint128 amount0,
         uint128 amount1,
         uint160 sqrtPriceX96
     ) internal view virtual returns (int24 tickLower, int24 tickUpper);
 
     function _createPosition(
-        PoolKey calldata key,
-        IPoolManager.SwapParams calldata params,
+        PoolKey memory key,
+        IPoolManager.SwapParams memory params,
         uint128 amount0,
         uint128 amount1,
-        bytes calldata hookDataOpen
+        bytes memory hookDataOpen
     ) internal virtual returns (BalanceDelta delta, BalanceDelta feesAccrued, uint128 liquidity) {
-        (uint160 sqrtPriceX96,,,) = poolManager.getSlot0(key.toId());
+        (uint160 sqrtPriceX96,,,) = _poolManager().getSlot0(key.toId());
         (int24 tickLower, int24 tickUpper) = _getTickRange(key, params, amount0, amount1, sqrtPriceX96);
 
         liquidity = LiquidityAmounts.getLiquidityForAmounts(
@@ -55,7 +55,7 @@ abstract contract JIT is ImmutableState {
         (delta, feesAccrued) = _modifyLiquidity(key, tickLower, tickUpper, int256(uint256(liquidity)), hookDataOpen);
     }
 
-    function _closePosition(PoolKey calldata key, uint128 liquidityToClose, bytes calldata hookDataClose)
+    function _closePosition(PoolKey memory key, uint128 liquidityToClose, bytes memory hookDataClose)
         internal
         virtual
         returns (BalanceDelta delta, BalanceDelta feesAccrued)
@@ -70,9 +70,9 @@ abstract contract JIT is ImmutableState {
         int24 tickLower,
         int24 tickUpper,
         int256 liquidityDelta,
-        bytes calldata hookData
+        bytes memory hookData
     ) internal virtual returns (BalanceDelta totalDelta, BalanceDelta feesAccrued) {
-        (totalDelta, feesAccrued) = poolManager.modifyLiquidity(
+        (totalDelta, feesAccrued) = _poolManager().modifyLiquidity(
             key,
             IPoolManager.ModifyLiquidityParams({
                 tickLower: tickLower,
