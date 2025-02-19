@@ -6,7 +6,6 @@ import {PoolKey} from "v4-core/src/types/PoolKey.sol";
 import {Currency} from "v4-core/src/types/Currency.sol";
 
 library SwapParser {
-
     /// @notice Determine the input, output currencies and the amount
     /// @param key The pool key
     /// @param swapParams The IPoolManager.SwapParams of the current swap. Includes trade size and direction

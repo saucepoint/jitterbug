@@ -12,7 +12,7 @@ import {JIT} from "../JIT.sol";
 import {JITHook} from "../JITHook.sol";
 
 /// @title Simple JIT Hook
-/// @notice Pulls funds from a specified address, create a JIT position, and transfers funds back to the deployer
+/// @notice Pulls funds from a specified address `depositor`, create a JIT position, and transfers funds back to the `depositor`
 /// @dev JIT position is +/- 10% of the spot price
 contract Simple is JITHook {
     /// @dev Depositor should ERC20.approve this address

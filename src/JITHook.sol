@@ -16,6 +16,8 @@ import {ImmutableState} from "v4-periphery/src/base/ImmutableState.sol";
 
 import {JIT} from "./JIT.sol";
 
+/// @title JITHook
+/// @notice A minimal contract for automating JIT position provisioning via a Uniswap v4 Hook
 abstract contract JITHook is JIT {
     using TransientStateLibrary for IPoolManager;
 
@@ -29,14 +31,14 @@ abstract contract JITHook is JIT {
     /// @notice Defines the amount of tokens to be used in the JIT position
     /// @dev No tokens should be transferred into the PoolManager by this function. The afterSwap implementation, will handle token flows
     /// @param swapParams the swap params passed in during swap
-    /// @return amount0 the amount of currency0 pulled into the JIT position
-    /// @return amount1 the amount of currency1 pulled into the JIT position
+    /// @return amount0 the amount of currency0 to be used for JIT position
+    /// @return amount1 the amount of currency1 to be used for JIT position
     function _jitAmounts(PoolKey calldata key, IPoolManager.SwapParams calldata swapParams)
         internal
         virtual
         returns (uint128, uint128);
 
-    /// @notice Defines logic to send external capital to the PoolManager, to settle the JIT position
+    /// @notice Defines logic to send external capital to the PoolManager (to settle the JIT position)
     /// @param currency The currency being sent into the PoolManager
     /// @param amount The amount of currency being sent into the PoolManager
     function _sendToPoolManager(Currency currency, uint256 amount) internal virtual;
@@ -51,7 +53,7 @@ abstract contract JITHook is JIT {
         external
         returns (bytes4, BeforeSwapDelta, uint24)
     {
-        // transfer Currency from a source to PoolManager and then create a liquidity position
+        // define the amount of tokens to be used in the JIT position
         (uint128 amount0, uint128 amount1) = _jitAmounts(key, params);
 
         // create JIT position
@@ -77,8 +79,9 @@ abstract contract JITHook is JIT {
         int256 delta0 = poolManager.currencyDelta(address(this), key.currency0);
         int256 delta1 = poolManager.currencyDelta(address(this), key.currency1);
 
+        // resolve the delta from opening + closing a JIT position
         if (delta0 < 0) {
-            // pay currency
+            // pay currency from an arbitrary capital source to the PoolManager
             _sendToPoolManager(key.currency0, uint256(-delta0));
         } else if (delta0 > 0) {
             // transfer funds to recipient, must use ERC6909 because the swapper has not transferred ERC20 yet
@@ -86,7 +89,7 @@ abstract contract JITHook is JIT {
         }
 
         if (delta1 < 0) {
-            // pay currency
+            // pay currency from an arbitrary capital source to the PoolManager
             _sendToPoolManager(key.currency1, uint256(-delta1));
         } else if (delta1 > 0) {
             // transfer funds to recipient, must use ERC6909 because the swapper has not transferred ERC20 yet
